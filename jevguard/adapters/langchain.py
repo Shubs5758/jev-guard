@@ -71,6 +71,19 @@ def current_session_id() -> str | None:
         return None
 
 
+def session_id_from_request(request: Any) -> str | None:
+    """The thread id off the runtime carried on the request itself.
+
+    Preferred over :func:`current_session_id`, which reads a contextvar that langchain-core only
+    propagates through async calls on Python 3.11+. On 3.10 ``get_config()`` raises inside the
+    ``awrap_*`` hooks and every event would be recorded with no session, so sessions, budgets and
+    loop detection would all silently stop working. The runtime is passed in directly, so it
+    works on every supported version.
+    """
+    info = getattr(getattr(request, "runtime", None), "execution_info", None)
+    return getattr(info, "thread_id", None)
+
+
 def _state_messages(state: Any) -> list[AnyMessage]:
     if isinstance(state, dict):
         return list(state.get("messages", []))
@@ -99,8 +112,9 @@ class JevGuardMiddleware(AgentMiddleware):
     def name(self) -> str:  # middleware names must be unique per agent
         return "JevGuardMiddleware"
 
-    def _ctx(self, **kw: Any) -> GuardContext:
-        return GuardContext(session_id=current_session_id(), agent=self.agent_name, framework=self.framework, **kw)
+    def _ctx(self, request: Any = None, **kw: Any) -> GuardContext:
+        session_id = session_id_from_request(request) or current_session_id()
+        return GuardContext(session_id=session_id, agent=self.agent_name, framework=self.framework, **kw)
 
     def _note(self, d: Decision) -> Decision:
         self.last_decisions = (self.last_decisions + [d])[-50:]
@@ -150,7 +164,7 @@ class JevGuardMiddleware(AgentMiddleware):
         plan = self._input_plan(request)
         if plan:
             idx, msg = plan
-            d = self._note(self.guard.check(Stage.INPUT, message_text(msg), self._ctx()))
+            d = self._note(self.guard.check(Stage.INPUT, message_text(msg), self._ctx(request)))
             request_or_response = self._apply_input(request, idx, msg, d)
             if isinstance(request_or_response, ModelResponse):
                 return request_or_response
@@ -158,7 +172,8 @@ class JevGuardMiddleware(AgentMiddleware):
         response, rewrap = self._unwrap(handler(request))
         _, user = last_human(request.messages)
         for i, m, text in self._outputs(response):
-            ctx = self._ctx(user_goal=message_text(user) if user else None, grounding=recent_tool_output(request.messages))
+            ctx = self._ctx(request, user_goal=message_text(user) if user else None,
+                            grounding=recent_tool_output(request.messages))
             self._apply_output(response, i, m, self._note(self.guard.check(Stage.OUTPUT, text, ctx)))
         return rewrap(response)
 
@@ -167,7 +182,7 @@ class JevGuardMiddleware(AgentMiddleware):
         plan = self._input_plan(request)
         if plan:
             idx, msg = plan
-            d = self._note(await self.guard.acheck(Stage.INPUT, message_text(msg), self._ctx()))
+            d = self._note(await self.guard.acheck(Stage.INPUT, message_text(msg), self._ctx(request)))
             request_or_response = self._apply_input(request, idx, msg, d)
             if isinstance(request_or_response, ModelResponse):
                 return request_or_response
@@ -175,7 +190,8 @@ class JevGuardMiddleware(AgentMiddleware):
         response, rewrap = self._unwrap(await handler(request))
         _, user = last_human(request.messages)
         for i, m, text in self._outputs(response):
-            ctx = self._ctx(user_goal=message_text(user) if user else None, grounding=recent_tool_output(request.messages))
+            ctx = self._ctx(request, user_goal=message_text(user) if user else None,
+                            grounding=recent_tool_output(request.messages))
             self._apply_output(response, i, m, self._note(await self.guard.acheck(Stage.OUTPUT, text, ctx)))
         return rewrap(response)
 
@@ -183,7 +199,7 @@ class JevGuardMiddleware(AgentMiddleware):
     def _call_ctx(self, request: Any) -> GuardContext:
         tc = request.tool_call
         _, user = last_human(_state_messages(request.state))
-        return self._ctx(tool_name=tc.get("name"), tool_args=dict(tc.get("args") or {}),
+        return self._ctx(request, tool_name=tc.get("name"), tool_args=dict(tc.get("args") or {}),
                          user_goal=message_text(user) if user else None)
 
     @staticmethod
@@ -209,7 +225,7 @@ class JevGuardMiddleware(AgentMiddleware):
                 return self._blocked_tool_message(request, d)
         result = handler(request)
         if self.check_tool_results and isinstance(result, ToolMessage):
-            rctx = self._ctx(tool_name=ctx.tool_name, user_goal=ctx.user_goal)
+            rctx = self._ctx(request, tool_name=ctx.tool_name, user_goal=ctx.user_goal)
             result = self._apply_result(result, self._note(self.guard.check(Stage.TOOL_RESULT, message_text(result), rctx)))
         return result
 
@@ -221,7 +237,7 @@ class JevGuardMiddleware(AgentMiddleware):
                 return self._blocked_tool_message(request, d)
         result = await handler(request)
         if self.check_tool_results and isinstance(result, ToolMessage):
-            rctx = self._ctx(tool_name=ctx.tool_name, user_goal=ctx.user_goal)
+            rctx = self._ctx(request, tool_name=ctx.tool_name, user_goal=ctx.user_goal)
             result = self._apply_result(result, self._note(await self.guard.acheck(Stage.TOOL_RESULT, message_text(result), rctx)))
         return result
 
