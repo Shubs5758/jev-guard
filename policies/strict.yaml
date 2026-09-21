@@ -1,0 +1,41 @@
+# A strict production policy. Load with Guard("policies/strict.yaml") or
+# `jevguard dashboard --policy policies/strict.yaml`. Unlisted fields keep their defaults.
+name: strict
+mode: enforce            # use "shadow" for the first week: record everything, block nothing
+fail_mode: closed        # Jev unavailable + suspicious locally -> block
+scope: "customer support for Acme's billing product"   # enables the off_scope check
+canaries:
+  - CANARY-3f9a          # put this token in your system prompt; it must never leave
+redact_logged_text: true # scrub PII/secrets before events reach the dashboard
+
+tools:
+  deny: [delete_database, drop_table]
+  require_approval: [issue_refund, send_email, transfer_funds]
+  arg_deny_patterns:
+    bash: ["\\bsudo\\b", "\\brm\\s+-rf\\b"]
+    "*": ["169\\.254\\.169\\.254"]          # cloud metadata endpoint (SSRF)
+  egress_allowlist: [api.acme.example, api.stripe.com]
+
+session:
+  max_tool_calls: 40
+  max_identical_tool_calls: 3
+  escalate_at: 1.8
+  block_at: 3.0
+
+approvals:
+  default: block         # no approver configured -> escalations are blocked
+  timeout_s: 180
+
+stages:
+  input:
+    checks: [prompt_injection, jailbreak, harmful_request, secret_extraction, intent_risk, off_scope]
+    thresholds: {flag: 0.4, block: 0.8}
+    pii: redact
+    escalate_low_confidence: true
+    min_confidence: 0.6
+  output:
+    checks: [harmful_output, system_prompt_leak, unsafe_instructions, groundedness, off_scope]
+    thresholds: {flag: 0.4, block: 0.8}
+    check_thresholds:
+      groundedness: {flag: 0.5, block: 0.95}   # ungrounded answers get flagged, rarely blocked
+    pii: redact

@@ -1,0 +1,106 @@
+name: default
+version: 1
+mode: enforce
+fail_mode: closed
+scope: null
+canaries: []
+redact_logged_text: false
+jev:
+  backend: auto
+  model: jev-latest
+  base_url: https://api.typesafe.ai/v1/systemone
+  timeout_s: 3.0
+  rate_limit_cooldown_s: 60.0
+  circuit_failures: 5
+  circuit_reset_s: 30.0
+  cache_ttl_s: 300.0
+  cache_size: 2048
+  price_per_million_input_tokens: 0.042
+tools:
+  allow: []
+  deny: []
+  require_approval: []
+  arg_deny_patterns: {}
+  egress_allowlist: []
+session:
+  max_tool_calls: 60
+  max_identical_tool_calls: 4
+  risk_decay: 0.85
+  escalate_at: 2.2
+  block_at: 3.5
+approvals:
+  default: block
+  timeout_s: 120.0
+stages:
+  input:
+    enabled: true
+    checks:
+    - prompt_injection
+    - jailbreak
+    - harmful_request
+    - secret_extraction
+    - intent_risk
+    thresholds:
+      flag: 0.5
+      block: 0.85
+    check_thresholds: {}
+    pii: flag
+    secrets: block
+    escalate_low_confidence: false
+    min_confidence: 0.6
+  tool_call:
+    enabled: true
+    checks:
+    - action_risk
+    - exfiltration
+    - goal_misalignment
+    thresholds:
+      flag: 0.45
+      block: 0.8
+    check_thresholds: {}
+    pii: ignore
+    secrets: block
+    escalate_low_confidence: false
+    min_confidence: 0.6
+  tool_result:
+    enabled: true
+    checks:
+    - embedded_instructions
+    - malicious_content
+    thresholds:
+      flag: 0.45
+      block: 0.8
+    check_thresholds: {}
+    pii: redact
+    secrets: block
+    escalate_low_confidence: false
+    min_confidence: 0.6
+  retrieval:
+    enabled: true
+    checks:
+    - embedded_instructions
+    - malicious_content
+    thresholds:
+      flag: 0.45
+      block: 0.8
+    check_thresholds: {}
+    pii: ignore
+    secrets: block
+    escalate_low_confidence: false
+    min_confidence: 0.6
+  output:
+    enabled: true
+    checks:
+    - harmful_output
+    - system_prompt_leak
+    - unsafe_instructions
+    - groundedness
+    - off_scope
+    thresholds:
+      flag: 0.5
+      block: 0.85
+    check_thresholds: {}
+    pii: redact
+    secrets: block
+    escalate_low_confidence: false
+    min_confidence: 0.6

@@ -1,0 +1,28 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+*.db
+*.db-shm
+*.db-wal
+.venv/
+venv/
+
+# build artefacts
+build/
+dist/
+*.whl
+*.tar.gz
+
+# editors and tooling
+.idea/
+.vscode/
+.qodo/
+.ruff_cache/
+.mypy_cache/
+.DS_Store
+
+# secrets: .env.example is the tracked template
+.env
+.env.*
+!.env.example
