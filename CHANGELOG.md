@@ -40,9 +40,9 @@ First public release.
 
 ### Notes
 
-- Published to PyPI as **`jev-guard`**; the import name is `jevguard`.
+- Published to PyPI as **`jevguard-middleware`**; the import name is `jevguard`.
 - The OpenAI Agents SDK adapter is written against the SDK's public guardrail API but is not
   exercised by the test suite, as the package is not installed here.
 
-[Unreleased]: https://github.com/Shubs5758/jev-guard/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/Shubs5758/jev-guard/releases/tag/v0.1.0
+[Unreleased]: https://github.com/Shubs5758/jevguard-middleware/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Shubs5758/jevguard-middleware/releases/tag/v0.1.0

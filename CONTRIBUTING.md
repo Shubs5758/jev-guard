@@ -1,13 +1,13 @@
 # Contributing to jevguard
 
-Thanks for taking the time to help. This project is published on PyPI as **`jev-guard`**
+Thanks for taking the time to help. This project is published on PyPI as **`jevguard-middleware`**
 and imported as **`jevguard`**.
 
 ## Getting set up
 
 ```bash
-git clone https://github.com/Shubs5758/jev-guard.git
-cd jev-guard
+git clone https://github.com/Shubs5758/jevguard-middleware.git
+cd jevguard-middleware
 python -m venv .venv && . .venv/bin/activate     # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 cp .env.example .env                              # optional: add a key for real Jev calls

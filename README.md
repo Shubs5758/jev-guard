@@ -17,9 +17,9 @@ It checks every point where untrusted text enters or leaves the agent loop:
 Every decision is **allow · flag · redact · escalate · block**, has a calibrated risk score and the
 evidence behind it, and shows up in a live dashboard.
 
-[![PyPI](https://img.shields.io/pypi/v/jev-guard.svg)](https://pypi.org/project/jev-guard/)
-[![Python](https://img.shields.io/pypi/pyversions/jev-guard.svg)](https://pypi.org/project/jev-guard/)
-[![CI](https://github.com/Shubs5758/jev-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/Shubs5758/jev-guard/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/jevguard-middleware.svg)](https://pypi.org/project/jevguard-middleware/)
+[![Python](https://img.shields.io/pypi/pyversions/jevguard-middleware.svg)](https://pypi.org/project/jevguard-middleware/)
+[![CI](https://github.com/Shubs5758/jevguard-middleware/actions/workflows/ci.yml/badge.svg)](https://github.com/Shubs5758/jevguard-middleware/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![stages](https://img.shields.io/badge/stages-5-7c5cff) ![tests](https://img.shields.io/badge/tests-116%20passing-22c55e)
 
@@ -52,11 +52,11 @@ a cooldown on `ProviderRateLimitError`, and fail-closed when degraded. Now it ru
 ## Install
 
 ```bash
-pip install jev-guard                   # core
-pip install "jev-guard[all]"            # + dashboard and LangChain/LangGraph adapters
+pip install jevguard-middleware                   # core
+pip install "jevguard-middleware[all]"            # + dashboard and LangChain/LangGraph adapters
 ```
 
-> **Note on names.** The package is published on PyPI as **`jev-guard`**, but you import it as
+> **Note on names.** The package is published on PyPI as **`jevguard-middleware`**, but you import it as
 > **`jevguard`** and the CLI is `jevguard`. An unrelated project already holds the `jevguard`
 > name on PyPI, so `pip install jevguard` installs something else.
 
@@ -81,8 +81,8 @@ pipeline first. `doctor` and the dashboard both label that state "Simulator"; it
 ### From source
 
 ```bash
-git clone https://github.com/Shubs5758/jev-guard.git
-cd jev-guard
+git clone https://github.com/Shubs5758/jevguard-middleware.git
+cd jevguard-middleware
 pip install -e ".[dev]"
 pytest -q
 ```
