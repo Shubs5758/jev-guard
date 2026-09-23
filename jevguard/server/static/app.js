@@ -65,6 +65,7 @@
     spark: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/>',
     shield: '<path d="M12 2 4 5v6c0 5 3.4 9.3 8 11 4.6-1.7 8-6 8-11V5z"/>',
     inbox: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z"/>',
+    alert: '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
     check: '<path d="M20 6 9 17l-5-5"/>',
     x: '<path d="M6 6l12 12M18 6 6 18"/>',
     save: '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/>',
@@ -689,7 +690,7 @@
         <div style="margin-left:auto;display:flex;gap:8px"><select id="ds">${datasets.map((d) => `<option>${esc(d)}</option>`).join("")}</select><button class="btn primary" id="run-eval">${icon("play")}Run eval</button></div>
       </div></div>
       <div class="grid g-evals" style="align-items:start">
-        <div class="card flush"><div class="card-head"><h3>Runs</h3></div><div style="padding:8px">${runs.length ? runs.map((r) => `<a href="#/evals/${r.id}" class="nav" style="display:block"><div style="padding:9px 10px;border-radius:9px;${(runId || runs[0].id) === r.id ? "background:var(--accent-soft)" : ""}"><div style="display:flex;justify-content:space-between"><b style="font-size:13px">${esc(r.dataset)}</b><span style="font-weight:650;color:${r.metrics.f1 >= 0.9 ? "var(--allow)" : r.metrics.f1 >= 0.75 ? "var(--flag)" : "var(--block)"}">F1 ${Math.round(r.metrics.f1 * 100)}</span></div><div class="muted" style="font-size:11.5px">${fmtDate(r.ts)} · ${esc(r.metrics.backend)}</div></div></a>`).join("") : '<div class="muted" style="padding:10px">No runs yet</div>'}</div></div>
+        <div class="card flush"><div class="card-head"><h3>Runs</h3></div><div style="padding:8px">${runs.length ? runs.map((r) => `<a href="#/evals/${r.id}" class="nav" style="display:block"><div style="padding:9px 10px;border-radius:9px;${(runId || runs[0].id) === r.id ? "background:var(--accent-soft)" : ""}"><div style="display:flex;justify-content:space-between"><b style="font-size:13px">${esc(r.dataset)}</b><span style="font-weight:650;color:${r.metrics.f1 >= 0.9 ? "var(--allow)" : r.metrics.f1 >= 0.75 ? "var(--flag)" : "var(--block)"}">F1 ${Math.round(r.metrics.f1 * 100)}</span></div><div class="muted" style="font-size:11.5px">${fmtDate(r.ts)} · ${esc(r.metrics.backend)}${r.metrics.degraded ? ' · <span style="color:var(--block)">degraded</span>' : ""}</div></div></a>`).join("") : '<div class="muted" style="padding:10px">No runs yet</div>'}</div></div>
         <div id="run-view"><div class="card"><div class="empty">${icon("evals")}<b>No eval selected</b><span>Run the built-in red-team set to see precision, recall and every miss.</span></div></div></div>
       </div>`;
     $("#run-eval").onclick = async () => {
@@ -705,7 +706,16 @@
     const grade = (v) => (v >= 0.9 ? col.good : v >= 0.75 ? col.mid : col.bad);
     let onlyMistakes = false;
     const casesHtml = () => run.cases.filter((c) => !onlyMistakes || !c.correct).map((c) => `<tr><td>${c.correct ? `<span style="color:var(--allow)">${icon("check")}</span>` : `<span style="color:var(--block)">${icon("x")}</span>`}</td><td class="mono muted">${esc(c.id)}</td><td>${stagePill(c.stage)}</td><td>${esc((c.category || "").replace(/_/g, " "))}</td><td><span class="badge b-${c.expected === "block" ? "block" : "allow"}">${esc(c.expected)}</span></td><td><span class="badge b-${esc(c.action)}">${esc(c.action)}</span></td><td>${riskCell(c.risk)}</td><td><div class="cell-text">${esc(c.tool_name ? c.tool_name + " " + c.text : c.text)}</div></td></tr>`).join("");
+    // A run Jev did not answer scores the local rules, not the guard. Say so on the numbers themselves.
+    const degradedNote = m.degraded
+      ? `<div class="card" style="border-color:var(--block)"><div style="display:flex;gap:14px;align-items:center">
+          <div style="width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:var(--panel);color:var(--block);border:1px solid var(--border);flex:none">${icon("alert")}</div>
+          <div><div style="font-weight:650">Degraded run - these numbers do not measure the guard</div>
+          <div class="muted" style="font-size:12.5px">Jev did not answer ${m.degraded_cases} of ${m.n} cases (rate limit, open circuit, bad credentials or no backend), so those were scored on local rules alone. Re-run when the backend is healthy.</div></div>
+        </div></div>`
+      : "";
     $("#run-view").innerHTML = `<div style="display:flex;flex-direction:column;gap:16px" class="fade-in">
+      ${degradedNote}
       <div class="card"><div class="card-head"><h3>${esc(run.dataset)}</h3><span class="sub">${m.n} cases · ${esc(m.backend)} · ${m.jev_calls} Jev calls · ${fmtUsd(m.cost_usd)} · p95 ${fmtMs(m.latency_p95_ms)}</span></div>
         <div style="display:flex;gap:28px;flex-wrap:wrap;align-items:center;justify-content:space-around">
           ${ring(m.precision, "Precision", grade(m.precision))}${ring(m.recall, "Recall", grade(m.recall))}${ring(m.f1, "F1", grade(m.f1))}${ring(1 - m.fpr, "1 − FPR", grade(1 - m.fpr))}

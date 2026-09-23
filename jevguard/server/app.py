@@ -43,6 +43,11 @@ class GuardRequest(BaseModel):
     context: dict[str, Any] = {}
 
 
+# camelCase spellings accepted on `context`, for JavaScript and other non-Python callers.
+CTX_ALIASES = {"".join(p.capitalize() if i else p for i, p in enumerate(name.split("_"))): name
+               for name in GuardContext.__dataclass_fields__ if "_" in name}
+
+
 class ReviewRequest(BaseModel):
     label: str  # true_positive | false_positive | true_negative | false_negative
     note: str | None = None
@@ -91,8 +96,11 @@ def create_app(db_path: str | None = None, policy_path: str | None = None) -> Fa
             raise HTTPException(401, "invalid or missing API key")
 
     def ctx_from(data: dict[str, Any]) -> GuardContext:
+        # JavaScript callers write camelCase. Unknown keys are dropped, so accepting only snake_case
+        # silently guards a tool call with no tool name or args - which allows everything.
         allowed = GuardContext.__dataclass_fields__.keys()
-        return GuardContext(**{k: v for k, v in data.items() if k in allowed})
+        fields = {CTX_ALIASES.get(k, k): v for k, v in data.items()}
+        return GuardContext(**{k: v for k, v in fields.items() if k in allowed})
 
     # ---- UI ----------------------------------------------------------------------------------------
     @app.get("/", include_in_schema=False)

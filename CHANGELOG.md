@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Eval runs now report `degraded_cases`, `degraded_frac` and `degraded`: the cases Jev never answered
+  because of a rate limit, an open circuit, bad credentials or no backend. `jevguard eval` fails when
+  more than `--max-degraded` (default 0.1) of the cases were scored that way, instead of reporting a
+  heuristics-only run as a result, and the dashboard labels such a run on the Evals page.
+
+### Fixed
+
+- The guard API now accepts camelCase keys (`toolName`, `sessionId`, ...) on `context`. Unknown keys
+  were dropped, so a hand-written non-Python client that spelled them that way had its tool calls
+  checked with no tool name or arguments - which allowed everything.
+
 ## [0.1.0] - 2026-09-21
 
 First public release.
@@ -44,5 +57,5 @@ First public release.
 - The OpenAI Agents SDK adapter is written against the SDK's public guardrail API but is not
   exercised by the test suite, as the package is not installed here.
 
-[Unreleased]: https://github.com/Shubs5758/jevguard-middleware/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/Shubs5758/jevguard-middleware/releases/tag/v0.1.0
+[Unreleased]: https://github.com/Shubs5758/jev-guard/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Shubs5758/jev-guard/releases/tag/v0.1.0

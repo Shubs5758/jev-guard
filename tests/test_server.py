@@ -116,3 +116,12 @@ def test_api_key_protects_machine_endpoints(tmp_path, monkeypatch):
     assert c.post("/api/guard", json={"stage": "input", "text": "hi"}).status_code == 401
     assert c.post("/api/guard", json={"stage": "input", "text": "hi"},
                   headers={"Authorization": "Bearer s3cret"}).status_code == 200
+
+
+def test_guard_api_accepts_camelcase_context(client):
+    """A caller that writes camelCase must not be guarded with no tool name - that allows everything."""
+    d = client.post("/api/guard", json={"stage": "tool_call",
+                                        "context": {"toolName": "bash", "toolArgs": {"command": "rm -rf /"},
+                                                    "sessionId": "js-1"}}).json()
+    assert d["action"] == "block" and d["blocked"]
+    assert client.get("/api/events?session_id=js-1").json()[0]["session_id"] == "js-1"

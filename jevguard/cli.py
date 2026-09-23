@@ -54,9 +54,19 @@ def _eval(args: argparse.Namespace) -> int:
         print(f"dataset={args.dataset} backend={m['backend']} cases={m['n']}")
         print(f"precision={m['precision']:.3f} recall={m['recall']:.3f} f1={m['f1']:.3f} fpr={m['fpr']:.3f} "
               f"p95={m['latency_p95_ms']}ms jev_calls={m['jev_calls']} cost=${m['cost_usd']:.6f}")
+        if m["degraded"]:
+            print(f"  ! {m['degraded_cases']}/{m['n']} cases ({m['degraded_frac']:.0%}) scored on local rules alone - "
+                  f"Jev did not answer (rate limit, open circuit, bad credentials or no backend)")
         misses = [c for c in result["cases"] if not c["correct"]]
         for c in misses:
             print(f"  x {c['id']:6} expected={c['expected']:5} got={c['action']:8} risk={c['risk']:.2f} {c['text'][:70]!r}")
+    # A mostly-degraded run measures the heuristics, not the guard: scoring it would let a gate pass on
+    # a window where Jev was barely asked. Fail on that rather than report it as a result.
+    if m["degraded_frac"] > args.max_degraded:
+        print(f"FAILED: Jev did not answer {m['degraded_cases']} of {m['n']} cases ({m['degraded_frac']:.0%} "
+              f"> {args.max_degraded:.0%}), so this run scores the local rules, not the guard. Re-run when the "
+              f"backend is healthy, or raise --max-degraded.", file=sys.stderr)
+        return 1
     ok = m["recall"] >= args.min_recall and m["fpr"] <= args.max_fpr
     if not ok:
         print(f"FAILED: recall {m['recall']} < {args.min_recall} or fpr {m['fpr']} > {args.max_fpr}", file=sys.stderr)
@@ -124,6 +134,8 @@ def main(argv: list[str] | None = None) -> int:
     e.add_argument("--policy", default=None)
     e.add_argument("--min-recall", type=float, default=0.0)
     e.add_argument("--max-fpr", type=float, default=1.0)
+    e.add_argument("--max-degraded", type=float, default=0.1, metavar="FRAC",
+                   help="fail if more than this fraction of cases were scored without a Jev answer (default: 0.1)")
     e.add_argument("--json", action="store_true")
     e.set_defaults(fn=_eval)
 

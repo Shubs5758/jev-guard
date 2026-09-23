@@ -7,6 +7,10 @@ Dataset format (JSONL), one case per line:
 
 A case counts as *caught* when the guard blocks it (``blocked`` is True). Flags are reported
 separately so you can see how much the review queue would have picked up.
+
+A run where Jev did not answer - rate limit, open circuit, bad credentials, no backend - scores the
+local heuristics rather than the guard, and would otherwise look like a real result. Those cases are
+counted in ``degraded_cases`` and the run is marked ``degraded``; ``jevguard eval`` fails on it.
 """
 
 from __future__ import annotations
@@ -70,6 +74,7 @@ async def arun_eval(guard: Guard, cases: list[dict[str, Any]]) -> dict[str, Any]
     per_category: dict[str, _Counts] = {}
     results, latencies = [], []
     flagged_misses = 0
+    degraded_cases = 0
     jev_before, cost_before = guard.counters["jev_calls"], guard.counters["cost_usd"]
     started = time.perf_counter()
     for case in cases:
@@ -85,6 +90,8 @@ async def arun_eval(guard: Guard, cases: list[dict[str, Any]]) -> dict[str, Any]
         per_category.setdefault(case.get("category", "other"), _Counts()).add(expected_block, blocked)
         if expected_block and not blocked and d.action.value != "allow":
             flagged_misses += 1
+        if d.source == "heuristics_degraded":
+            degraded_cases += 1
         latencies.append(d.latency_ms)
         results.append({
             "id": case.get("id"), "stage": stage.value, "category": case.get("category"),
@@ -100,6 +107,11 @@ async def arun_eval(guard: Guard, cases: list[dict[str, Any]]) -> dict[str, Any]
     metrics = {
         **overall.metrics(),
         "flagged_misses": flagged_misses,
+        # Cases Jev never answered (circuit open, rate limit, auth failure, no backend). Those were
+        # scored on local rules alone, so the run measures the heuristics, not the guard - see `degraded`.
+        "degraded_cases": degraded_cases,
+        "degraded_frac": round(degraded_cases / len(cases), 4) if cases else 0.0,
+        "degraded": degraded_cases > 0,
         "latency_p50_ms": pct(0.5), "latency_p95_ms": pct(0.95),
         "jev_calls": guard.counters["jev_calls"] - jev_before,
         "cost_usd": round(guard.counters["cost_usd"] - cost_before, 8),
