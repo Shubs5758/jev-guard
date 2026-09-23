@@ -23,7 +23,7 @@ evidence behind it, and shows up in a live dashboard.
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![stages](https://img.shields.io/badge/stages-5-7c5cff) ![tests](https://img.shields.io/badge/tests-120%20passing-22c55e)
 
-![The jevguard dashboard: 256 checks, 30 blocked, and coverage across all five stages of the agent loop](https://raw.githubusercontent.com/Shubs5758/jev-guard/main/docs/images/overview.jpg)
+![The jevguard dashboard: 256 checks, 30 blocked, and coverage across all five stages of the agent loop](https://raw.githubusercontent.com/Shubs5758/jev-guard/main/docs/images/overview.png)
 
 ---
 
@@ -337,21 +337,21 @@ jevguard demo                 # optional: fill it with realistic traffic
 **Playground** - a prompt injection blocked at risk 100, with the evidence that decided it. `Jev: not needed`
 means the local rules were unambiguous, so the check cost nothing.
 
-![Playground: a prompt injection blocked at risk 100, showing prompt_injection 100%, secret_extraction 75% and persona reassignment 50% as evidence](https://raw.githubusercontent.com/Shubs5758/jev-guard/main/docs/images/playground.jpg)
+![Playground: a prompt injection blocked at risk 100, showing prompt_injection 100%, secret_extraction 75% and persona reassignment 50% as evidence](https://raw.githubusercontent.com/Shubs5758/jev-guard/main/docs/images/playground.png)
 
 **Live feed** - every decision as it happens, with the reason attached. Tool calls and tool results are in
 here next to user input, which is the point: an injection in tool output is caught the same way.
 
-![Live feed: a stream of decisions, with a bash rm -rf / tool call and a prompt injection both blocked at risk 100](https://raw.githubusercontent.com/Shubs5758/jev-guard/main/docs/images/live-feed.jpg)
+![Live feed: a stream of decisions, with a bash rm -rf / tool call and a prompt injection both blocked at risk 100](https://raw.githubusercontent.com/Shubs5758/jev-guard/main/docs/images/live-feed.png)
 
 **Sessions & traces** - one agent run step by step, with risk accumulating across turns.
 
-![Session trace: a two-step session with the user input and the tool call both blocked, and cumulative session risk](https://raw.githubusercontent.com/Shubs5758/jev-guard/main/docs/images/session-trace.jpg)
+![Session trace: a two-step session with the user input and the tool call both blocked, and cumulative session risk](https://raw.githubusercontent.com/Shubs5758/jev-guard/main/docs/images/session-trace.png)
 
 **Review queue** - label decisions as correct or false positive; the labels build a calibration diagram and
 an ECE, so you can see whether a 90% risk score really is wrong 90% of the time on *your* traffic.
 
-![Review queue: a calibration diagram with expected calibration error, and flagged decisions waiting to be labelled](https://raw.githubusercontent.com/Shubs5758/jev-guard/main/docs/images/review-queue.jpg)
+![Review queue: a calibration diagram with expected calibration error, and flagged decisions waiting to be labelled](https://raw.githubusercontent.com/Shubs5758/jev-guard/main/docs/images/review-queue.png)
 
 Set `JEVGUARD_API_KEY` (in `.env` or the environment) to require `Authorization: Bearer ...` on the machine
 endpoints (`/api/events`, `/api/guard`, `/api/approvals`). `JEVGUARD_DB` and `JEVGUARD_POLICY` set the database
