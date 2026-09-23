@@ -52,10 +52,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Shubs5758/jevguard-middleware"
-Repository = "https://github.com/Shubs5758/jevguard-middleware"
-Issues = "https://github.com/Shubs5758/jevguard-middleware/issues"
-Changelog = "https://github.com/Shubs5758/jevguard-middleware/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/Shubs5758/jev-guard"
+Repository = "https://github.com/Shubs5758/jev-guard"
+Issues = "https://github.com/Shubs5758/jev-guard/issues"
+Changelog = "https://github.com/Shubs5758/jev-guard/blob/main/CHANGELOG.md"
 
 [project.scripts]
 jevguard = "jevguard.cli:main"

@@ -6,8 +6,8 @@ and imported as **`jevguard`**.
 ## Getting set up
 
 ```bash
-git clone https://github.com/Shubs5758/jevguard-middleware.git
-cd jevguard-middleware
+git clone https://github.com/Shubs5758/jev-guard.git
+cd jev-guard
 python -m venv .venv && . .venv/bin/activate     # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 cp .env.example .env                              # optional: add a key for real Jev calls

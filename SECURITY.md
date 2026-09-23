@@ -12,7 +12,7 @@ jevguard is pre-1.0. Fixes land on the latest released version; please upgrade b
 
 Please report security issues **privately**, not as a public GitHub issue:
 
-- Use [GitHub's private vulnerability reporting](https://github.com/Shubs5758/jevguard-middleware/security/advisories/new), or
+- Use [GitHub's private vulnerability reporting](https://github.com/Shubs5758/jev-guard/security/advisories/new), or
 - Email **ambavane26@gmail.com** with `jevguard security` in the subject.
 
 Please include what you were running (version, policy, backend), what you expected, what happened,
